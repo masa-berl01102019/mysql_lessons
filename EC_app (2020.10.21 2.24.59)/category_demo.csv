@@ -1,0 +1,95 @@
+﻿id,category_name,parent_id
+1,Men's,null
+2,Women's,null
+3,Tops,1
+4,Jackets / Coats,1
+5,Pants,1
+6,All in ones,1
+7,Tops,2
+8,Jackets / Coats,2
+9,Pants,2
+10,All in ones,2
+11,Skirts,2
+12,One piece,2
+13,T-Shirts,3
+14,Tank Tops,3
+15,Polos,3
+16,Henleys,3
+17,Shirts,3
+18,Hoodies,3
+19,Pullovers,3
+20,Cardigans,3
+21,Vests,3
+22,others,3
+23,Tailored jacket,4
+24,Colorless jacket,4
+25,Denim Jacket,4
+26,Riders jacket,4
+27,Blouson,4
+28,Coverall,4
+29,Military jacket,4
+30, Down vest,4
+31,Down jacket / coat,4
+32,Duffle coat,4
+33,Mods coat,4
+34,Pea coat,4
+35,Bal collar coat,4
+36,Trench coat,4
+37,Chester coat,4
+38,Mountain parka,4
+39,Stadium jacket ,4
+40,Sukajan,4
+41,others,4
+42,Denim pants,5
+43,Cargo pants,5
+44,Chino pants,5
+45,Slacks,5
+46,others,5
+47,Salopette / Overalls,6
+48,All-in-one,6
+49,Ensemble,7
+50,Camisole,7
+51,Tube top,7
+52,T-Shirts,7
+53,Tank Tops,7
+54,Polos,7
+55,Blouse,7
+56,Shirts,7
+57,Hoodies,7
+58,Pullovers,7
+59,Cardigans,7
+60,Vests,7
+61,others,7
+62,Tailored jacket,8
+63,Colorless jacket,8
+64,Denim Jacket,8
+65,Riders jacket,8
+66,Blouson,8
+67,Coverall,8
+68,Military jacket,8
+69, Down vest,8
+70,Down jacket / coat,8
+71,Duffle coat,8
+72,Mods coat,8
+73,Pea coat,8
+74,Bal collar coat,8
+75,Trench coat,8
+76,Chester coat,8
+77,Mountain parka,8
+78,Stadium jacket ,8
+79,Sukajan,8
+80,others,8
+81,Denim pants,9
+82,Cargo pants,9
+83,Chino pants,9
+84,Slacks,9
+85,others,9
+86,Salopette / Overalls,10
+87,All-in-one,10
+88,Skirts,11
+89,Denim skirts,11
+90,One piece,12
+91,Shirt dress,12
+92,Jumper skirt,12
+93,Tunic,12
+94,Dress,12

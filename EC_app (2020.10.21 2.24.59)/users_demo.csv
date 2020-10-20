@@ -1,0 +1,11 @@
+﻿id,users_name,gender,date_of_birth,tell,adress,email
+1,tanaka,man,1996/12/13,090-XXXX-XXXX ,Ishikawa,test1@mail.com
+2,takahashi,woman,1999/3/22,090-XXXX-XXXX ,Shiga,test2@mail.com
+3,suzuki,woman,1987/5/3,090-XXXX-XXXX ,tokyo,test3@mail.com
+4,satou,man,1973/8/19,090-XXXX-XXXX ,osaka,test4@mail.com
+5,murata,man,2006/6/23,090-XXXX-XXXX ,kyoto,test5@mail.com
+6,nakatani,woman,1984/11/6,080-XXXX-XXXX,kanagawa,test6@mail.com
+7,yamagishi,woman,1992/8/25,080-XXXX-XXXX,mie,test7@mail.com
+8,maeda,man,2002/4/18,080-XXXX-XXXX,kouti,test8@mail.com
+9,kawamoto,man,1983/1/27,080-XXXX-XXXX,fukuoka,test9@mail.com
+10,yasutani,man,2000/2/28,080-XXXX-XXXX,kagoshima,test10@mail.com

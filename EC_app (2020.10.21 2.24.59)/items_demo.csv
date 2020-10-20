@@ -1,0 +1,12 @@
+﻿id,item_name,price,cost,comment,description,season
+1,military jacket,5800,1920,comment,color/fablic/madein,autumn
+5,merino wool knit,2200,740,comment,color/fablic/madein,winter
+9,pullover,1700,450,comment,color/fablic/madein,autumn
+2,BD shirts,3200,670,comment,color/fablic/madein,spring
+6,logo T-shirts,1800,530,comment,color/fablic/madein,summer
+10,color pants,3400,750,comment,color/fablic/madein,autumn
+11,print T-shirts A,1400,400,comment,color/fablic/madein,summer
+8,print T-shirts B,1000,300,comment,color/fablic/madein,summer
+3,print T-shirts C,1200,300,comment,color/fablic/madein,summer
+7,short pants,2300,790,comment,color/fablic/madein,spring
+4,pleats skirt,2200,810,comment,color/fablic/madein,spring
