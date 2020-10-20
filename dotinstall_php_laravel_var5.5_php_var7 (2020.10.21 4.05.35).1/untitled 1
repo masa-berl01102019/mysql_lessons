@@ -1,0 +1,623 @@
+-------------------------------------------------------lessons3 フォルダ構成を確認しよう------------------------------------------
+
+appフォルダ: アプリケーションに関するクラスの管理（modelに関するファイルはここに生成される）
+             laravel5.5ではデフォルトでユーザーモデルが作成される
+  - httpフォルダ: コントローラーが格納されるフォルダ
+
+configフォルダ: 色々な設定に関するファイルを管理
+
+databaseフォルダ: データベースに関するファイルを管理
+  - migrateionsフォルダ: データベースのバージョン管理をするファイルを格納
+                         migrationファイルを変更することでデータベース構成を変更したりその変更を取り消したりすることが出来るので、
+                         結果としてデータベース構成のバージョン管理ができるという仕組み
+                         デフォルトでlaravelが作成したUserに関するマイグレーションファイルが入っている
+
+publicフォルダ: ブラウザからアクセスした時に見えるファイルの管理（CSSやJavaScriptや画像等の管理）
+
+resourcesフォルダ:
+  - viewsフォルダ: 画面のテンプレートを格納するフォルダ
+
+routesフォルダ: どのURLにアクセスした時にどの処理を行うか設定する為のファイルを格納するフォルダ
+
+  -web.php: webアプリケーションを作成する際に使うファイル
+
+-------------------------------------------------------lessons4 アプリケーションの設定をしていこう------------------------------------------
+
+1.設定の作成
+
+.envファイル
+  .envファイルには環境に依存するような設定値を書いておいて
+  config フォルダにあるファイルからは.envファイルに書かれた値を参照するといった使い方をする
+  上記のような使い方をすることで環境が変わった時に .env ファイルだけを差し替えるだけで済む
+
+configフォルダ/app.php
+  全体の設定をするファイル
+  env()はenv-helper関数と呼ばれていて.envファイルから値を持ってくるための命令
+  'name' => env('APP_NAME', 'Laravel'),
+  上記はappに関してはenvの APP_NAME に値が設定されていたらそれを参照し、値が設定されていなかったら Laravel を使いなさいという意味
+
+<データベースの設定>:
+  .envファイルのDB_CONNECTIONがデフォルトでmysqlなので他のデータベースを作成する場合にはここをいじる
+  DB_CONNECTION=mysql ←ここをsqliteに書き換えて
+  下記の項目はsqliteでは不要なので削除しておく
+  DB_HOST=127.0.0.1
+  DB_PORT=3306
+  DB_DATABASE=homestead
+  DB_USERNAME=homestead
+  DB_PASSWORD=secret
+
+<タイムゾーンの設定>:
+  app.phpでタイムゾーンを地域に合わせて変更
+  'timezone' => 'UTC', ←ここをAsia/Tokyoに書き換え
+
+<言語の設定>:
+  app.phpで言語設定を地域に合わせて変更
+  'locale' => 'en', ←ここをjaに書き換え
+
+-------------------------------------------------------lessons5 マイグレーションの設定をしよう--------------------------------------------------------------------
+<Modelとmigrationファイルの作成>:
+ $ php artisan make:model モデル名 --migration
+ 上記をコマンドラインで実行するとModelの作成とmigrationファイルの作成が出来る
+
+<migrationファイルの更新>:
+ databaseフォルダのmigrationsファイルが作成されるので中身を確認
+ migrationファイルには up() と down() というメソッドがある
+  up()がマイグレーションで行いたい処理
+  down() はそれを巻き戻すための処理
+  上記のメソッドの中身を更新してデータベース構成を変更したりその変更を取り消したりすることが出来る
+  結果としてデータベース構成のバージョン管理ができるという仕組み
+
+  $ php artisan migrate
+  migrationsファイル変更後にコマンドラインで上記のコマンドを実行すると更新されたtableが作成される
+
+  データベースを確認すると
+  .schema posts
+  下記のように更新後のデータベースが作成されていることが表示される
+  CREATE TABLE "posts" ("id" integer not null primary key autoincrement,
+                        "title" varchar not null,
+                        "body" text not null,
+                        "created_at" datetime null,
+                        "updated_at" datetime null);
+
+-------lesson6/7/8 Modelをインタラクティブに操作しよう/ Mass Assignmentを設定しよう/データの抽出、更新、削除をしてよう------------------------------------
+
+laravelのモデルはEloquentモデルと呼ばれている
+
+<tinkerのコマンド>:
+
+1.作動コマンド
+  $ php artisan tinker
+
+2.終了方法コマンド
+  exit
+  ＊tinker中にファイルの設定等を変更した場合は一旦tinkerを終了しないと設定が反映されないので注意
+
+3.モデルからインスタンス作成コマンド
+  $変数 = new 名前空間\モデル名();
+  ＊laravelはデフォルトで名前空間がAppになっているので注意が必要
+  ex) $post = new App\Post();
+      => App\Post {#2913}
+
+4.インスタンスにレコード挿入コマンド
+  $変数->カラム名 = "値";
+  ex) $post->title = "title1";
+      => "title1"
+      $post->body = "body1";
+      => "body1"
+
+5.インスタンスの保存コマンド(save)
+  $変数->save();
+  ＊下記のようにtrueと表示されれば正常に処理が終了したという意味
+  ex) $post->save();
+      => true
+
+6.DBに保存したデータの全件抽出するコマンド(all)
+  名前空間\モデル名::all();
+  ex) App\Post::all();
+      => Illuminate\Database\Eloquent\Collection {#2922
+           all: [
+             App\Post {#2923
+               id: "1",
+               title: "title1",
+               body: "body1",
+               created_at: "2019-03-05 11:51:43",
+               updated_at: "2019-03-05 11:51:43",
+             },
+           ],
+         }
+
+7.DBに保存したデータの配列形式にして抽出するコマンド(toArray)
+  名前空間\モデル名::all()->toarray();
+  ex) App\Post::all()->toarray();
+      => [
+           [
+             "id" => 1,
+             "title" => "title1",
+             "body" => "body1",
+             "created_at" => "2019-03-05 11:51:43",
+             "updated_at" => "2019-03-05 11:51:43",
+           ],
+         ]
+
+  SQLにアクセスしてデータを確認すると下記のように表示される
+  $ sqlite3 database/database.sqlite
+  select * from posts;
+  1|title1|body1|2019-03-05 11:51:43|2019-03-05 11:51:43
+
+8.インスタンスを作成せずにレコード挿入するコマンド(create)
+  名前空間\モデル名::create(['カラム名'=>'値','カラム名'=>'値']);
+  ex) App\Post::create(['title'=>'title2','body'=>'body2']);
+      => App\Post {#2911
+           title: "title2",
+           body: "body2",
+           updated_at: "2019-03-05 12:53:08",
+           created_at: "2019-03-05 12:53:08",
+           id: 2,
+         }
+      App\Post::create(['title'=>'title3','body'=>'body3']);
+      => App\Post {#2922
+           title: "title3",
+           body: "body3",
+           updated_at: "2019-03-05 12:53:30",
+           created_at: "2019-03-05 12:53:30",
+           id: 3,
+         }
+
+  all();で確認すると下記のように表示される
+  App\Post::all();
+  => Illuminate\Database\Eloquent\Collection {#2913
+       all: [
+         App\Post {#2919
+           id: "1",
+           title: "title1",
+           body: "body1",
+           created_at: "2019-03-05 11:51:43",
+           updated_at: "2019-03-05 11:51:43",
+         },
+         App\Post {#2906
+           id: "2",
+           title: "title2",
+           body: "body2",
+           created_at: "2019-03-05 12:53:08",
+           updated_at: "2019-03-05 12:53:08",
+         },
+         App\Post {#2926
+           id: "3",
+           title: "title3",
+           body: "body3",
+           created_at: "2019-03-05 12:53:30",
+           updated_at: "2019-03-05 12:53:30",
+         },
+       ],
+     }
+
+  ＊インスタンスなしでレコード挿入する際の注意点
+  Illuminate/Database/Eloquent/MassAssignmentException with message 'Add [title] to fillable property to allow mass assignment on [App/Post].'
+  事前にモデルファイルの設定をしておかないと上記のようなMassAssignmentエラーが出てしまう
+  MassAssignmentは意図しないリクエストによって悪意のあるデータが挿入されてしまう脆弱性のこと
+  Laravelではデフォルトでそのための対策が有効になっているので
+  モデルのクラス内に protected $fillable = ['カラム名','カラム名']; と記載する
+  上記の形で指定したカラム名はレコードを挿入可能になる
+
+9.特定のidを指定して抽出するコマンド(find)
+  名前空間\モデル名::find(idの値);
+  ex) App\Post::find(3)
+      => App\Post {#2924
+           id: "3",
+           title: "title3",
+           body: "body3",
+           created_at: "2019-03-05 12:53:30",
+           updated_at: "2019-03-05 12:53:30",
+         }
+      App\Post::find(3)->toArray();
+      => [
+           "id" => 3,
+           "title" => "title3",
+           "body" => "body3",
+           "created_at" => "2019-03-05 12:53:30",
+           "updated_at" => "2019-03-05 12:53:30",
+         ]
+
+10.条件を指定して抽出するコマンド(where,get)
+  名前空間\モデル名::where(条件)->get();
+  ex) App\Post::where('id','>',1)->get();
+      => Illuminate\Database\Eloquent\Collection {#2933
+           all: [
+             App\Post {#2931
+               id: "2",
+               title: "title2",
+               body: "body2",
+               created_at: "2019-03-05 12:53:08",
+               updated_at: "2019-03-05 12:53:08",
+             },
+             App\Post {#2929
+               id: "3",
+               title: "title3",
+               body: "body3",
+               created_at: "2019-03-05 12:53:30",
+               updated_at: "2019-03-05 12:53:30",
+             },
+           ],
+         }
+      App\Post::where('id','>',1)->get()->toArray();
+      => [
+           [
+             "id" => 2,
+             "title" => "title2",
+             "body" => "body2",
+             "created_at" => "2019-03-05 12:53:08",
+             "updated_at" => "2019-03-05 12:53:08",
+           ],
+           [
+             "id" => 3,
+             "title" => "title3",
+             "body" => "body3",
+             "created_at" => "2019-03-05 12:53:30",
+             "updated_at" => "2019-03-05 12:53:30",
+           ],
+         ]
+
+11.並べ替えて抽出するコマンド(orderBy)
+  名前空間\モデル名::where(条件)->orderBy('カラム名',昇順 or 降順)->get(); #条件抽出して並べ替え
+  ex) App\Post::where('id','>',1)->orderBy('created_at','desc')->get()->toArray();
+      => [
+           [
+             "id" => 3,
+             "title" => "title3",
+             "body" => "body3",
+             "created_at" => "2019-03-05 12:53:30",
+             "updated_at" => "2019-03-05 12:53:30",
+           ],
+           [
+             "id" => 2,
+             "title" => "title2",
+             "body" => "body2",
+             "created_at" => "2019-03-05 12:53:08",
+             "updated_at" => "2019-03-05 12:53:08",
+           ],
+         ]
+      ＊descは大きい順 ascは小さい順(デフォルトはascなので指定しなくても作動)
+  名前空間\モデル名::orderBy('カラム名',昇順 or 降順)->get(); #全件抽出して並べ替え
+  ex) App\Post::orderBy('id','desc')->get()->toArray();
+      => [
+           [
+             "id" => 3,
+             "title" => "title3",
+             "body" => "body3",
+             "created_at" => "2019-03-05 12:53:30",
+             "updated_at" => "2019-03-05 12:53:30",
+           ],
+           [
+             "id" => 2,
+             "title" => "title2",
+             "body" => "body2",
+             "created_at" => "2019-03-05 12:53:08",
+             "updated_at" => "2019-03-05 12:53:08",
+           ],
+           [
+             "id" => 1,
+             "title" => "title1",
+             "body" => "body1",
+             "created_at" => "2019-03-05 11:51:43",
+             "updated_at" => "2019-03-05 11:51:43",
+           ],
+         ]
+      ＊上記のように全件抽出して並び替えの際はall()は使えない点とorderBy()とget()はセットで使用する点に注意
+
+12.件数を制限して抽出するコマンド(take)
+  名前空間\モデル名::where(条件)->take(件数)->get(); #条件抽出して件数制限
+  ex) App\Post::where('id','>',1)->take(1)->get();
+      => Illuminate\Database\Eloquent\Collection {#2925
+           all: [
+             App\Post {#2947
+               id: "2",
+               title: "title2",
+               body: "body2",
+               created_at: "2019-03-05 12:53:08",
+               updated_at: "2019-03-05 12:53:08",
+             },
+           ],
+         }
+  名前空間\モデル名::where(条件)->orderBy('カラム名',昇順 or 降順)->take(件数)->get(); #条件抽出して並べ替えて件数制限
+  ex) App\Post::where('id','>',1)->orderBy('id','desc')->take(1)->get()
+      => Illuminate\Database\Eloquent\Collection {#2942
+           all: [
+             App\Post {#2922
+               id: "3",
+               title: "title3",
+               body: "body3",
+               created_at: "2019-03-05 12:53:30",
+               updated_at: "2019-03-05 12:53:30",
+             },
+           ],
+         }
+  名前空間\モデル名::take(件数)->get(); #全件抽出して件数制限
+  ex) App\Post::take(2)->get();
+      => Illuminate\Database\Eloquent\Collection {#2923
+           all: [
+             App\Post {#2942
+               id: "1",
+               title: "title1",
+               body: "body1",
+               created_at: "2019-03-05 11:51:43",
+               updated_at: "2019-03-05 11:51:43",
+             },
+             App\Post {#2927
+               id: "2",
+               title: "title2",
+               body: "body2",
+               created_at: "2019-03-05 12:53:08",
+               updated_at: "2019-03-05 12:53:08",
+             },
+           ],
+         }
+  名前空間\モデル名::orderBy('カラム名',昇順 or 降順)->take(件数)->get(); #全件抽出して並べ替えて件数制限
+  ex) App\Post::orderBy('created_at','desc')->take(2)->get();
+      => Illuminate\Database\Eloquent\Collection {#2921
+           all: [
+             App\Post {#2925
+               id: "3",
+               title: "title3",
+               body: "body3",
+               created_at: "2019-03-05 12:53:30",
+               updated_at: "2019-03-05 12:53:30",
+             },
+             App\Post {#2947
+               id: "2",
+               title: "title2",
+               body: "body2",
+               created_at: "2019-03-05 12:53:08",
+               updated_at: "2019-03-05 12:53:08",
+             },
+           ],
+         }
+
+13.データの更新と削除コマンド
+    1.更新したいデータを抽出して変数に格納
+      $update = App\Post::find(3);
+      => App\Post {#2936
+           id: "3",
+           title: "title3",
+           body: "body3",
+           created_at: "2019-03-05 12:53:30",
+           updated_at: "2019-03-05 12:53:30",
+         }
+    2.更新したいカラムに値を代入して上書き
+      $update->title = 'title3 updated';
+      => "title3 updated"
+    2.save()でデータベースに保存
+      $update->save();
+      => true
+    全件抽出で確認すると下記のように表示される
+      App\Post::all()->toarray();
+      => [
+           [
+             "id" => 1,
+             "title" => "title1",
+             "body" => "body1",
+             "created_at" => "2019-03-05 11:51:43",
+             "updated_at" => "2019-03-05 11:51:43",
+           ],
+           [
+             "id" => 2,
+             "title" => "title2",
+             "body" => "body2",
+             "created_at" => "2019-03-05 12:53:08",
+             "updated_at" => "2019-03-05 12:53:08",
+           ],
+           [
+             "id" => 3,
+             "title" => "title3 updated",
+             "body" => "body3",
+             "created_at" => "2019-03-05 12:53:30",
+             "updated_at" => "2019-03-05 22:49:04",
+           ],
+         ]
+    削除したいデータを抽出して変数に格納して下記のようにすれば削除出来る
+    $update->delete();
+    => true
+    全件抽出で確認すると下記のように表示される
+    App\Post::all()->toarray();
+    => [
+         [
+           "id" => 1,
+           "title" => "title1",
+           "body" => "body1",
+           "created_at" => "2019-03-05 11:51:43",
+           "updated_at" => "2019-03-05 11:51:43",
+         ],
+         [
+           "id" => 2,
+           "title" => "title2",
+           "body" => "body2",
+           "created_at" => "2019-03-05 12:53:08",
+           "updated_at" => "2019-03-05 12:53:08",
+         ],
+       ]
+
+-------------------------------------------------------lessons9 Controllerを使ってみよう--------------------------------------------------------------------
+
+ルーティングの設定方法:
+ ルーティングとはどのURLでどんな処理をするか設定すること
+
+1.routes/web.phpにてルーティングを設定
+  Route::get('/','PostController@index');
+
+2.コマンドラインにてコントローラーの作成
+  $ php artisan make:controller PostController
+
+3.app/Http/Controllers/PostControllerにてindexメソッドを実装
+  public function index(){ return "Hello";}
+
+4.サーバーにアクセスしてブラウザに表示されてるか確認
+  $ php artisan serve --host 192.168.33.10 --port 8000
+
+上記の流れルーティングを作成していく
+ ユーザーが指定のURLにアクセス→ルーティング→コントローラーでルーティングで指定されたアクションを実行の流れで処理される
+
+ルーティングの公式ドキュメントの参考例:
+機能名    action名	 HTTPメソッド	パス	                      ルート名
+一覧画面	index	     GET	        /リソース名	               resource.index
+作成画面	create	   GET	        /リソース名/create	         resource.create
+作成	    store	     POST	        /リソース名	               resource.store
+詳細画面	show	     GET	        /リソース名/{resource}      resource.show
+編集画面	edit	     GET	        /リソース名/{resource}/edit resource.edit
+編集	    update	   PUT/PATCH	  /リソース名/{resource}	     resource.update
+削除	    destroy	   DELETE	      /リソース名/{resource}	     resource.destroy
+
+-------------------------------------------------------lessons10 viewを用意しておこう--------------------------------------------------------------------
+
+Viewの表示方法:
+
+URLにアクセス→routing→controller/action→viewの流れで画面表示する方法
+Route::get('/','PostController@index')→PostController/index()→return view('posts.index')→postsフォルダ/index.blade.phpの流れ
+
+1.PostControllerクラスのindex()内にてview()でviewフォルダ以下の「フォルダ名.ファイル名」を指定して呼び出す
+  return view('posts.index');
+
+2.view()で指定したフォルダ名/ファイル名をbladeのテンプレートエンジン形式で作成してHTMLのひな型を実装
+
+-------------lessons11/12/13 データを抽出してみよう/データをviewに埋め込んでいこう/スタイルを整えていこう----------------------------------------------------
+
+＜データベースからデータを取得して表示する方法＞:
+
+1.データベースからデータを取得する際にはcontrollerからEloquentの命令をモデルのクラスメソッド使って変数にデータを格納して取得する
+  $posts = Post::latest()->get();
+  * modelにクラスメソッドを使う際には名前空間をつけないといけないので、名前空間が長すぎる場合はuseを使う
+
+2.取得したデータを格納した変数をviewを使って受け渡す
+  return view('posts.index',['posts' => $posts]); // 第二引数に連想配列の形で変数を渡す方法
+  return view('posts.index')->with('posts',$posts); //上記と同様の内容
+  * 上記のやり方で定義された'posts'は$postsの内容をviewの中でpostsという名前で使うことが出来るという意味
+
+3.受け渡しされたデータをbladeを使ってブラウザに表示する
+  Bladeの中で変数の中身を表示したい場合は{{ $変数 }}とする
+  ＊注意が必要なのはセットする配列には「＄」は含まれてないが、呼び出すときは「＄」が必要というところ
+  ＊{{ }}はlaravelが自動的に安全な文字にエスケープしてくれるようになっている
+  ＊変数名をそのまま表示したい場合には{!! $変数名 !!}とする
+  ＊変数がなかった場合のデフォルトで表示する文字列を「or」を使って{{ $変数 or '文字列' }}といった形で指定することも出来る
+  * 変数に改行が入ってくる可能性がある場合は{!! nl2br(e($変数)) !!}といった形で出力する
+
+-------------------------------------------------------lessons14/15 記事の詳細画面を作ろう/Implicit Binding を使ってみよう--------------------------------------------------------------------
+
+＜URLからパラメータを取得して表示する方法＞:
+
+1. ルーティングでURLのパラメーター部分を{変数名}で渡たす
+    Route::get('/posts/{id}','PostsController@show');
+
+2. ルーティングから渡ってきたURLのパラメータをshowアクションの引数として受け取る
+    public function show($id){
+    $post = Post::findOrFail($id);
+    return view('posts.show',['post',$post]);
+    }
+
+＜Implicit Bindingでルーティング作成する方法＞:
+
+   Implicit BindingとURLからidを受け取って、Controllerでそのidをもとにモデルを引っ張ってくる流れがよくあるので
+   モデルとデータを暗黙的に結び付けられる仕組み
+
+1. ルーティングのURLに渡すパラメータを変数名を決める
+   Route::get('/posts/{implicit}','PostsController@show');
+
+2. コントローラーのアクションの引数をPost型でルーティングの際に指定したパラメーター変数名と一緒にする
+   public function show(Post $implicit){
+    return view('posts.show',['post'=>$implicit]);
+   }
+   ＊上記の1.2の時点で自動的に$implicitにはURLから受け取ったidに対応するデータが格納される
+     その為、わざわざコントローラーからEloquentコマンド(Post::findOrFail($変数))などででidを引っ張ってこなくてよくなる
+
+3. action()によるURL生成の際に渡すパラメーターも$post->idとしなくても$postだけで@postのidをパラメーターに渡してくれる
+   <li><a href="{{ action('PostsController@show', $post) }}">{{ $post->title }}</a></li>
+
+<リンクを作成する方法>:
+
+1. ルーティングの設計通りにURLを指定する方法
+   <li><a href="/posts/{{$post->id}}">{{ $post->title }}</a></li>
+
+2. url()を使ってURLを作成する方法
+   <li><a href="{{ url('/posts',$post->id) }}">{{ $post->title }}</a></li>
+
+3. action()を使ってURLを生成する方法
+   <li><a href="{{ action('PostsController@show',$post->id) }}">{{ $post->title }}</a></li>
+
+--------------------------------------------------lessons16 共通部分を部品化していこう----------------------------------------------------
+
+<bladeを作成する方法>:
+
+1. HTMLの大まかな骨組(共通部分)を親ページにひな型として作成する
+   ex) <!DOCTYPE html>
+       <html lang="ja">
+         <head>
+           <meta charset="utf-8">
+           <title>@yield('title')</title>
+           <link rel="stylesheet" href="/css/styles.css">
+         </head>
+         <body>
+           <div class="container">
+             @yield('content')
+           </div>
+         </body>
+       </html>
+
+2. 子ページを作成して@extends('親ページのファイル')で継承する
+    ex) @extends('layouts.default')
+        上記は@extends('ファイル名')でlayoutフォルダのdefault.blade.phpを継承するという意味 *「;」はいらないので注意
+
+3. 子ページで定義した@section('名目')の中身を@yield('名目')で指定したセクションの内容を呼び出す形で使う
+    ex) @section('title')
+          Blog Posts
+        @endsection
+        上記のように@section('title')と@endsectionの間に埋め込みたい値を書いて@yield('title')と対応する形にする
+        ＊ 埋め込みたい値が短い場合は@section('title','Blog Posts')と書いてもいい
+
+4. bladeでのコメントの書き方 {{-- --}}
+
+5. bladeでのエスケープ
+   1. bladeでは基本的に変数や関数を出力する際に{{ }}で囲ってエスケープする
+
+   2. 本文に改行などが入るある場合などの書き方
+      <p>{!! nl2br(e($post->body)) !!}</p>
+           1. e() でエスケープをする
+           2. nl2br() で改行を<br>に置き換える
+           3. {!! !!}で、<br>だけエスケープをせずに表示する
+           nl2br()は指定された文字列に含まれる全ての改行文字（\nなど）の前に、HTMLの改行タグ（<br />など）を挿入して値を返す
+           e()は、Laravelが提供しているヘルパ関数で、やっていることは、ほぼhtmlentities関数と同じ
+
+6. bladeでの制御構造
+   @if(条件)~@endif
+   @foreach($配列 as $変数)~@endforeach
+   @forelse($配列 as $変数)~@empty~@endforelse ←foreachで回す配列がない場合に@empty以下が表示される構文
+   上記のようにlaravelにのみある制御構造もある
+   参考URL:https://blog.capilano-fw.com/?p=405#i-2
+   * 文末にセミコロンが要らないことに注意が必要
+
+7. 便利なヘルパー関数
+    old('key');
+    old('key', 'デフォルト値');
+      上記の形で直前に入力済されたデータを取得出来る
+      入力フォームに名前を入力し、バリデーションで失敗して元の画面に戻る場合に,すでに入力されたデータを取得する場合です出来る
+    method_field('put or patch/delete');
+      通常はHTMLのformタグのmethodではGETとPOSTしか出来ないので、httpメソッドにput/patch/deleteを利用したい場合に使える
+      実際にはmethod_field()でHTTPメソッド用のhiddenインプットタグを取得している
+      これを実行すると以下のようなタグが取得できる
+      <input type="hidden" name="_method" value="put/patch/delete">
+    ヘルパー関数のリファレンスの参考URL: https://blog.capilano-fw.com/?p=837#old
+
+--------------------------------------------------lessons17 headerメニューを作ろう----------------------------------------------------
+ルーティングの注意事項:
+
+Route::get('/posts/{implicit}','PostsController@show')
+Route::get('/posts/create','PostsController@create');
+
+ルーティングは先に書かれたものが優先されるため上記の場合 '/posts/create' でアクセスすると '/posts/{post}' に create が来たと判断されて
+上の方に書かれている、 'PostsController@show' の show アクションが実行されてしまう
+
+＜そうならないようにするための方法＞:
+
+ 1. 'PostsController@create' を先に書いてしまう方法
+     * 順番を考えるのが面倒なので、 where() を使って値のルールを決める方法がよく使われる
+
+ 2. '/posts/{post}' のルーティングのpostに関しては正規表現を使って数字しかダメだと書く方法
+      ex) Route::get('/posts/{implicit}','PostsController@show')->where('implicit','[0-9]+');
+    * 上記のように正規表現を使っておけば '/posts/create' でアクセスしたら '/posts/{post}' の post は数字限定なので
+      '/posts/{post}' のルーティングには該当しないで、次のルーティングにヒットして create アクションが実行されるという仕組み

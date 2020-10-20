@@ -1,0 +1,271 @@
+--------------------------------------------------lessons18 記事を追加するフォームを作ろう----------------------------------------------------
+<CSRF対策の仕方>:
+    <form method="POST" action="～">
+      {{ csrf_field() }}
+    </form>
+  Laravelでは悪意のある不正な投稿を防ぐためにデフォルトでCSRF対策が施されていて、
+  フォームにはそのためのトークンを仕込む必要があるので上記のようにform内に{{ csrf_field() }} とすればOK
+  Laravelは各セッションごとにCSRF「トークン」を自動的に生成している
+  formタグ内で{{ csrf_field() }}を宣言することにより、POST, PUT, DELETEのリクエストをした際に
+  webミドルウェアグループに含まれているVerifyCsrfToken ミドルウェアがリクエスト中のトークンとセッションに保存されているトークンが一致するか確認している
+
+--------------------------------------------------lessons19/20 新しい記事を保存しよう/バリデーションの設定をしよう----------------------------------------------------
+
+<validateの仕方>:
+  validateはformで送信された値をもとにデータの作成や更新を行う際にControllerなどでデータの妥当性のチェックに使われる
+  Laravelで定義されているのでControllerから呼び出す際は気軽に$this->validate();で呼び出せる
+      public function store(Request $request){
+         // formでpost型で送信されたものは Request型で渡ってくるので$requestで引数として受ける
+
+        $this->validate($request,[
+          'title'=>'required|min:3',
+          'body'=>'required'
+        ]);
+        // バリデーションに引っかかると自動的入力画面に差し戻してくれる
+      }
+  上記のように第一引数でvalidateする変数データを受けて、第二引数で連想配列の形でkeyに対しての条件を設定する
+  * 条件が複数ある場合は「|」で区切って書いていく
+  * 条件は書いた順番に確認され、引っかかった時点でエラーの例外処理をだしてform画面にredirctされるので
+    上記のようにrequiredに引っかかった場合はmin:3が検証されずにredirectされる
+  * 第三引数にエラーメッセージなども設定可能
+  参考URL: https://liginc.co.jp/359544
+           https://laraweb.net/knowledge/2100/
+
+<validateのエラーをブラウザで表示する>:
+  バリデーションエラーは全部自動的にフラッシュデータとしてセッションへ保存される。
+  Laravelはいつもセッションデータの中にエラーの存在をチェックしていて見つけた場合は$errorsに自動的に結合している。
+  $errors変数はIlluminate\Support\MessageBagのインスタンス
+     @if($errors->has('title'))
+      <span class="error">{{ $errors->first('title') }}</span>
+     @endif
+   上記のようにvalidateエラーがあった場合にブラウザで表示するにはif文で$errorsの存在を確認してあれば出力するようにすればいい
+   {{-- 上記はtitleに関して$errorがあった場合にエラーがなくなるまで$errors->first('title')で最初のものだけを表示しなさいということ --}}
+
+--------------------------------------------------lessons21/22 記事を編集するフォームを作ろう/記事を更新しよう----------------------------------------------------
+1.routes/web.phpにて投稿更新のルーティング作成
+  Route::patch('/posts/{implicit}','PostsController@update');
+    // edit.blade.phpからformで method_field('patch') action="{{ url('/posts',$post->id) }}"に合わせてルーティングの作成
+
+2.PostsController.phpにて投稿の更新の処理の作成
+    public function update(Request $request, Post $implicit){ // 引数の受け方注意
+      $this->validate($request,[
+        'title'=>'required|min:3',
+        'body'=>'required'
+      ]);
+      // 渡された$postを使うのでインスタンスは作成しなくていい
+      // $post = new Post();
+      $post = $implicit; // 引数で$postでうければ左記はかかなくていい
+      $post->title = $request->title;
+      $post->body = $request->body;
+      $post->save();
+      return redirect('/');
+    }
+--------------------------------------------------lessons23 PostRequestクラスを作ろう----------------------------------------------------
+
+1.PostsController内で新規作成と更新の際にvalidateが重複しているのでRequestクラスを作成してそこに記載していく
+  $ php artisan make:request PostRequestで作成出来る
+
+2.HTTP/Requests/PostRequest.phpにてrequestに関して書いていく
+  ＊認証のルールを書く際にauthorize()を使用する
+  ＊validationのルールを書く際にrules()を使用する
+  ＊validationのエラーメッセージをカスタマイズする際にはmessages()を作成して使用すればいい
+
+3.PostControllerでuseしてからRequest型からPostRequest型にデータ型を変更してバリデーションを削除
+
+validateの条件はlaravelで定義されているRequestクラスに書いて共通処理としてまとめることも可能:
+参考URL: https://liginc.co.jp/359544
+         https://laraweb.net/knowledge/2100/
+
+
+--------------------------------------------------lessons24 記事を削除出来るようにしよう----------------------------------------------------
+1.index.blade.phpにて削除画面の作成
+   <a href="#" class="del" data-id="{{ $post->id }}">[×]</a>
+   {{-- 削除処理の場合は単なるリンクの場合にアクセスしただけで削除になってしまうのでリンク先はダミー(#)にしておいてformで送信する --}}
+   <form method="post" action="{{ url('/post',$post->id) }}" id="form_{{ $post->id }}">
+     {{ crsf_field }} CRSF対策
+     {{ method_field('delete') }} methodの変更？？？
+   </form>
+   ＊削除処理の実装はJavascriptで行うのでリンクとフォームにidを設定する
+   <script src="/js/main.js"></script>
+
+--------------------------------------------------lessons25 削除処理を完成させよう----------------------------------------------------
+
+1.public/js/main.jsにて下記の実装
+  (function(){
+    'use strict';
+
+    // delクラスのリンクの取得
+    var cmds =document.getElementByClassName('del');
+    // ループ用の変数の宣言
+    var i;
+    // ループ処理
+    for( i = 0; i < cmds.length; i++ ){
+      // cmdsのi番目に対してクリックイベントを作成
+      cmds[i].addEventListener('click',function(e){
+        // 無名関数の引数にイベントオブジェクトを仕込んでe.preventDefault();とすることでaタグのリンク先に飛ぶという規定の動きを抑制する
+        e.preventDefault();
+        // confirm()で確認をとってyesの場合にtrueが返ってくるので、次の処理に移る
+        if(confirm('Are you sure ?')){
+          // .getElementById()でformタグのdata属性のidを取得してsubmitでフォームを送信する
+          document.getElementById('form_' + this.dataset.id).submit();
+        }
+      });
+    }
+    // 上記のコマンドはindex.blade.phpでリンク先をクリックされた時にJavascriptで一旦削除していいか確認してokの場合にformを送信するという実装
+
+  })();
+
+2.ルーティングの作成
+  Route::delete('/posts/{implicit}','PostsController@destroy');
+  //index.blade.phpからformで method_field('delete') action="{{ url('/posts',$post->id) }}"に合わせてルーティングの作成
+
+3.コントローラーの実装
+  public function destroy(Post $implicit){
+    $implicit->delete();
+    return redirect('/');
+  };
+
+--------------------------------------------------lessons26 コメントをつけられるようにしよう----------------------------------------------------
+
+1.コマンドプロントでモデルの作成
+  $ php artisan make:model Comment --migration
+
+2.datebase/migrations/commentテーブルの設定
+  public function up(){
+      Schema::create('comments', function (Blueprint $table) {
+          $table->increments('id');
+          // postに対して紐づける為、post_idのフィールド作成
+          // $table->integer('post_id');
+          // post_idは負の整数を取ることがないのでデータ型をunsignedIntegerとしてあげる
+          $table->unsignedInteger('post_id');
+          // commentの本文のフィールド作成 * 一行コメントの予定なのでデータ型はstringにしておく
+          $table->string('body');
+          $table->timestamps();
+          // post_idとpostsテーブルのidを紐づけるための外部キー制約を作成
+          $table->foreign('post_id')->references('id')->on('posts')->onDelete('cascade');
+          // 上記はpost_idはpostテーブルのidを参照してpostが削除されたら一緒にコメントも削除しなさいという制約
+      });
+  }
+
+3.コマンドプロントでmigrationファイルの更新する
+  $ php artisan migrate
+
+--------------------------------------------------lessons27 記事とコメントを結びつけよう----------------------------------------------------
+
+1.app/Comment.phpにてモデルの設定
+  class Comment extends Model {
+      // データの挿入が可能になるように$fillableの設定
+      protected $fillable = ['body'];
+
+      // commentモデルとpostモデルの関係性を定義
+      // $comment->postでアクセス出来るようにしたい
+      public function post(){
+        return $this->belongsTo('App\Post');
+      }
+  }
+
+2.app/Post.phpにてモデルの設定
+  class Post extends Model{
+      protected $fillable = ['title','body'];
+
+      // Commentモデルとの関係性を定義
+      // $post->commentsでアクセス出来るようにしたい
+      public function comments(){
+        return $this->hasMany('App\Comment');
+      }
+  }
+
+3.show.blade,phpにて本文の下にコメントが表示されるように実装
+  <h2>Comments</h2>
+  <ul>
+    @forelse($post->comments as $commet)
+      <li>
+        {{ $commet->body }}
+      </li>
+    @empty
+      <li>No comments yet</li>
+    @endforelse
+  </ul>
+
+--------------------------------------------------lessons28 コメント追加用のフォームをつけよう----------------------------------------------------
+
+1.show.blade.phpにてformの実装
+  <form action="{{ action('CommentsCntroller@store',$implicit) }}" method="post" >
+    {{ csrf_field() }}
+    <p>
+      <input type="text" name="body" placeholder="enter comment" value="{{ old('body') }}">
+      @if($errors->has('body'))
+      <span class="error">{{ $errors->first('body') }}</span>
+      @endif
+    </p>
+    <p>
+      <input type="submit" value="Add Comment">
+    </p>
+  </form>
+
+2.web.phpにてルーティングの作成
+  //コメントの投稿
+  Route::post('/posts/{implicit}/comments','CommentsController@store');
+  //show.blade.phpからformで method="post" action="{{ action('CommentsCntroller@store',$implicit) }}"に合わせてルーティングの作成
+
+3.コマンドプロントにてコントローラーの作成
+  $ php artisan make:controller CommentsController
+
+--------------------------------------------------lessons29 コメントを保存できるようにしよう-----------------------------------------------------------
+
+1.app/CommentsControllerにてデータ保存の実装
+  public function store(Request $request, Post $implicit){
+    // 引数はform送信されているのでRequest型の$requestと紐づけられているPost型の$implicit(postのid)の２つ *postモデルにアクセスするのでuseを忘れない
+    $this->validate( $request,[
+      'body'=>'required'
+    ]);
+    $post = $implicit;
+    // 下記のように直接インスタンス作成時に引数に連想配達の形で渡せる *Commentモデルにアクセスするのでuseを忘れない
+    $comment = new Comment(['body' => $request->body]);
+    // Post.phpで実装した$post->commments()で$postに紐づけしつつ、save()にcommentsのデータを引数に渡して保存
+    $post->comments()->save($comment);
+    // 違うコントローラーに対してリダイレクトをかける時はaction()を使う必要がある *showの場合はidを指定しないといけないので忘れずに渡す
+    return redirect()->action('PostsController@show',$implicit);
+  }
+
+--------------------------------------------------lessons30 コメントを削除できるようにしよう-----------------------------------------------------------
+
+1.show.blade.phpにて投稿の削除の実装
+  <a href="#" class="del" data-id="{{ $comment->id }}">[×]</a>
+  <form method="post" action="{{ action('CommentsController@destroy',[$post,$comment]) }}" id="form_{{ $comment->id }}">
+  {{-- action()の引数は[$post,$comment]の両方渡す必要がある --}}
+    {{ csrf_field() }}
+    {{ method_field('delete') }}
+  </form>
+
+2.web.phpにてルーティングの作成
+  //コメントの削除
+  Route::delete('/posts/{implicit}/comments/{comment}','CommentsController@destroy');
+  //show.blade.phpからformで method_field('delete') action('CommentsController@destroy',[$post,$comment])に合わせてルーティングの作成
+
+3.app/CommentsControllerにてデータの削除の実装
+  public function destroy(Post $implicit,Comment $comment){
+    $comment->delete();
+    return redirect()->back();
+  }
+
+--------------------------------------------------lessons31 外部キー制約を有効にしよう-----------------------------------------------------------
+
+SQliteに関してはデフォルトで外部キー制約がoffになっているため、コメントのついた投稿を削除してもデータベース上でコメントが残ってしまう:
+そうならないようにapp/Providers/AppServiceProvider.phpにて外部キー制約が有効になるように下記のように設定しておく:
+    public function boot()
+    {
+      if (\DB::getDriverName() === 'sqlite') {
+        \DB::statement(\DB::raw('PRAGMA foreign_keys=1'));
+      }
+    }
+
+
+
+
+
+
+
+
+
+# end

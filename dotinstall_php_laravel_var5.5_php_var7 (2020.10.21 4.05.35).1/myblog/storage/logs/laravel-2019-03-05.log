@@ -1,0 +1,16 @@
+[2019-03-05 23:38:06] local.ERROR: There are no commands defined in the "make:" namespace.
+
+Did you mean this?
+    make {"exception":"[object] (Symfony\\Component\\Console\\Exception\\NamespaceNotFoundException(code: 0): There are no commands defined in the \"make:\" namespace.
+
+Did you mean this?
+    make at /home/vagrant/php_lessons/dotinstall_php_laravel/myblog/vendor/symfony/console/Application.php:578)
+[stacktrace]
+#0 /home/vagrant/php_lessons/dotinstall_php_laravel/myblog/vendor/symfony/console/Application.php(618): Symfony\\Component\\Console\\Application->findNamespace('make:')
+#1 /home/vagrant/php_lessons/dotinstall_php_laravel/myblog/vendor/symfony/console/Application.php(226): Symfony\\Component\\Console\\Application->find('make::')
+#2 /home/vagrant/php_lessons/dotinstall_php_laravel/myblog/vendor/symfony/console/Application.php(145): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#3 /home/vagrant/php_lessons/dotinstall_php_laravel/myblog/vendor/laravel/framework/src/Illuminate/Console/Application.php(89): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#4 /home/vagrant/php_lessons/dotinstall_php_laravel/myblog/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(122): Illuminate\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#5 /home/vagrant/php_lessons/dotinstall_php_laravel/myblog/artisan(37): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#6 {main}
+"} 
